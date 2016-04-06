@@ -1,0 +1,59 @@
+(reset)
+(echo "===============================")
+;; (echo "hello world")
+
+(define X::int)
+(define Y::int)
+
+(define F::int)
+(define M::int)
+(define N::int)
+
+(define G::int)
+(define P::int)
+
+(define T::int)
+(define S::int)
+
+;; firewall sigma (condition)
+(assert (= M S))
+(assert (= N T))
+
+;; routing sigma (condition)
+;; (assert (= F G))
+
+;; (echo "\nnow check\n")
+
+;; ==============================
+;; insert (bl, (s,t))
+
+;; (define s::int)
+;; (define t::int)
+
+;; (assert (= s S))
+;; (assert (= t T))
+
+;; ==============================
+;; delete (bl, (S=s /\ T=t))
+(define s::int)
+(define t::int)
+
+(assert (and (= s S) (= t T)))
+
+(assert (or (< s M) (< M s)))
+(assert (or (< t N) (< N t)))
+
+;; ==============================
+;; insert (rm, (f,m,n))
+
+;; (define f::int)
+;; (define m::int)
+;; (define n::int)
+
+;; (assert (= F f))
+;; (assert (= M m))
+;; (assert (= N n))
+
+;; (check)
+
+(show-model)
