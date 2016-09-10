@@ -1,0 +1,24 @@
+(reset)
+(echo "===============================\n")
+(echo "hello world\n")
+
+
+;; NAT0 insert into rm (X,Y)
+
+(define X::int)
+(define Y::int)
+
+(assert (or (= X 29) (= X 27)))
+
+
+;; FW constraints blacklist(S, T)
+
+(define S::int)
+(define T::int)
+
+(assert (or (and (= S 27) (= T 22)) (and (= S 32) (= T 20))))
+(assert (= X S))
+(assert (= Y T))
+
+(check)
+(show-model)
