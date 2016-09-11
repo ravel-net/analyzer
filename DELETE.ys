@@ -1,0 +1,38 @@
+﻿(reset)
+(echo "===============================\n")
+(echo "hello world\n")
+
+;; FW0 delete from rm (X,Y)
+(define X::int)
+(define Y::int)
+
+;; the deletion condition of FW blacklist
+;; ########################################
+;; # FW: Blacklisted Flows 
+;; # format: fw_id src dst
+;; ########################################
+;; 0 h27 h22(service--->client)
+;; 0 h20 h32(client--->service)
+(assert (or (and (= S 27) (= T 22)) (and (= S 20) (= T 32))))
+
+;; NAT0 constraints NAT_Members(S,T)
+;;S:hostname
+;;T:hostIP
+(define S::int)
+(define T::int)
+
+;; view condition of NAT_Members
+;; # NAT Members
+;; # format: service_id hostname host_ip
+;; ########################################
+;; 0 h32 10.0.0.33
+;; 0 h27 10.0.0.28
+;; NOT CARE T'S VALUE
+(assert (or (= S 32) (= S 27))
+
+;; partial evaluation
+(assert (= Y S))
+
+
+(check)
+(show-model)
