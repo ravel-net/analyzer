@@ -12,6 +12,8 @@ import random
 import sys
 import struct
 import socket
+import networkx
+
 from optparse import OptionParser
 
 def next_ip(base, offset):
@@ -175,6 +177,47 @@ def optParser():
 
     return parser
 
+def assign_fw_flows(num_fw, flows):
+    flow_map = {}
+    rev_flow_map = {}
+    for end1, end2 in flows:
+        if end1 not in flow_map:
+            flow_map[end1] = []
+
+        if end2 not in rev_flow_map:
+            rev_flow_map[end2] = []
+
+        flow_map[end1].append(end2)
+        rev_flow_map[end2].append(end1)
+
+    g = networkx.Graph()
+    for end1, end2 in flows:
+        g.add_edge(end1, end2)
+
+    subgraphs = networkx.connected_component_subgraphs(g)
+    print "LEN", len(list(subgraphs))
+    subgraphs = networkx.connected_component_subgraphs(g)
+
+    divisions = {}
+    for i, subgraph in enumerate(subgraphs):
+        div_id = len(divisions) % num_fw
+        print div_id
+
+        if div_id not in divisions:
+            divisions[div_id] = set()
+
+        for node in subgraph.nodes():
+            print div_id, node
+            if node in flow_map:
+                for end2 in flow_map[node]:
+                    divisions[div_id].add((node, end2))
+
+            if node in rev_flow_map:
+                for end1 in rev_flow_map[node]:
+                    divisions[div_id].add((end1, node))
+
+    return divisions
+
 def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.2):
     toposize = int(toposize)
     num_fw = int(num_fw)
@@ -196,18 +239,14 @@ def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.2):
         print "ERROR: #clients < #fw, increase topology size"
         sys.exit(0)
 
-    fw_divisions = {}
     nat = {}
     nat_members = {}
-
-    for i in range(num_fw):
-        fw_divisions[i] = []
 
     public_ipbase = "192.0.0.1"
     for i in range(num_nat):
         nat[i] = next_ip(public_ipbase, i)
         nat_members[i] = []
-    
+
     # deterministically assign servers to a NAT ID (ie, a service)
     for i, host in enumerate(servers):
         groupid = i % num_nat
@@ -221,12 +260,7 @@ def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.2):
 
     # blacklist a random sample of those flows
     blacklist = random.sample(flows, int(len(flows) * blockrate))
-
-
-    # deterministically assign blacklisted flows to FW instances
-    for i, flow in enumerate(blacklist):
-        div_id = i % num_fw
-        fw_divisions[div_id].append(flow)
+    fw_divisions = assign_fw_flows(num_fw, blacklist)
 
     config = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
     config.print_config()
