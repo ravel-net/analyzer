@@ -172,12 +172,12 @@ def optParser():
                       help="Number of FW instance (default: 10)")
     parser.add_option("--nat", "-n", type="string", default=10,
                       help="Number of NAT instances (default: 10)")
-    parser.add_option("--blockrate", "-b", type="string", default=0.2,
-                      help="Percentage of node pairs to block with FW (default 0.2)")
+    parser.add_option("--blockrate", "-b", type="string", default=0.05,
+                      help="Percentage of node pairs to block with FW (default 0.05)")
 
     return parser
 
-def assign_fw_flows(num_fw, flows):
+def assign_fw_flows_global(num_fw, flows):
     flow_map = {}
     rev_flow_map = {}
     for end1, end2 in flows:
@@ -212,7 +212,31 @@ def assign_fw_flows(num_fw, flows):
 
     return divisions
 
-def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.2):
+def assign_fw_flows(num_fw, blockrate, servers, clients):
+    per_fw_count = int(len(servers) * len(clients) * blockrate / num_fw)
+    divisions = {}
+    for i in range(num_fw):
+        divisions[i] = [[], []]
+
+    for i, server in enumerate(servers):
+        divisions[i % num_fw][0].append(server)
+
+    for i, client in enumerate(clients):
+        divisions[i % num_fw][1].append(client)
+
+    blacklist = {}
+    for i in range(num_fw):
+        blacklist[i] = set()
+
+        while len(blacklist[i]) < per_fw_count:
+            s = random.choice(divisions[i][0])
+            c = random.choice(divisions[i][1])
+            blacklist[i].add((s,c))
+
+    print "-----------------", blockrate, len(servers), len(clients)
+    return blacklist
+
+def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.05):
     toposize = int(toposize)
     num_fw = int(num_fw)
     num_nat = int(num_nat)
@@ -247,14 +271,14 @@ def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.2):
         nat_members[groupid].append(host)
 
     # generate all possible (client, server) flows
-    flows = []
-    for server in servers:
-        for client in clients:
-            flows.append((server, client))
-
+    # flows = []
+    # for server in servers:
+    #     for client in clients:
+    #         flows.append((server, client))
     # blacklist a random sample of those flows
-    blacklist = random.sample(flows, int(len(flows) * blockrate))
-    fw_divisions = assign_fw_flows(num_fw, blacklist)
+    # blacklist = random.sample(flows, int(len(flows) * blockrate))
+    # fw_divisions = assign_fw_flows(num_fw, blacklist)
+    fw_divisions = assign_fw_flows(num_fw, blockrate, servers, clients)
 
     config = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
     config.print_config()
