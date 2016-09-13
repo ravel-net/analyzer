@@ -233,7 +233,6 @@ def assign_fw_flows(num_fw, blockrate, servers, clients):
             c = random.choice(divisions[i][1])
             blacklist[i].add((s,c))
 
-    print "-----------------", blockrate, len(servers), len(clients)
     return blacklist
 
 def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.05):
