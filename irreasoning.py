@@ -195,19 +195,13 @@ def assign_fw_flows(num_fw, flows):
         g.add_edge(end1, end2)
 
     subgraphs = networkx.connected_component_subgraphs(g)
-    print "LEN", len(list(subgraphs))
-    subgraphs = networkx.connected_component_subgraphs(g)
-
     divisions = {}
     for i, subgraph in enumerate(subgraphs):
         div_id = len(divisions) % num_fw
-        print div_id
-
         if div_id not in divisions:
             divisions[div_id] = set()
 
         for node in subgraph.nodes():
-            print div_id, node
             if node in flow_map:
                 for end2 in flow_map[node]:
                     divisions[div_id].add((node, end2))
