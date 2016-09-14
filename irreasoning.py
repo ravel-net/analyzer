@@ -228,7 +228,13 @@ def assign_fw_flows(num_fw, blockrate, servers, clients):
     for i in range(num_fw):
         blacklist[i] = set()
 
-        while len(blacklist[i]) < per_fw_count:
+        # there might not be enough possible server-flow combinations within
+        # each FW instances managed IP range, so only block as many as possible
+        max_blocks = len(divisions[i][0]) * len(divisions[i][1])
+        for j in 2*range(max_blocks):
+            if len(blacklist[i]) > per_fw_count:
+                break
+
             s = random.choice(divisions[i][0])
             c = random.choice(divisions[i][1])
             blacklist[i].add((s,c))
