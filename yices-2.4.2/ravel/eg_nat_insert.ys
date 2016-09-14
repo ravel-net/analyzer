@@ -1,0 +1,39 @@
+(reset)
+
+;; # NAT Members
+;; # format: service_id hostname host_ip
+;; ########################################
+;; 0 h29 10.0.0.30
+;; 0 h27 10.0.0.28
+
+
+;; NAT0 insert into rm (X,Y)
+
+(define X::int)
+(define Y::int)
+
+;; the values X can take is constrained by NAT members
+(assert (or (= X 29) (= X 27)))
+
+
+;; FW constraints blacklist(S, T)
+
+(define S::int)
+(define T::int)
+
+;; view condition of blacklist
+;; ########################################
+;; # FW: Blacklisted Flows 
+;; # format: fw_id src dst
+;; ########################################
+;; 0 h27 h22
+;; 0 h32 h20
+
+(assert (or (and (= S 27) (= T 22)) (and (= S 32) (= T 20))))
+
+;; partial evaluation
+(assert (= X S))
+(assert (= Y T))
+
+(check)
+(show-model)

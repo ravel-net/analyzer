@@ -1,7 +1,4 @@
 (reset)
-(echo "===============================\n")
-(echo "hello world\n")
-
 
 ;; # NAT Members
 ;; # format: service_id hostname host_ip
