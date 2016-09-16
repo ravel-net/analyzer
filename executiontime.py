@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 #
 # Irrelevance reasoning configuration generator
 #
@@ -13,6 +13,8 @@ import sys
 import struct
 import socket
 import networkx
+import shutil
+import datetime
 
 from optparse import OptionParser
 
@@ -82,6 +84,131 @@ class Configuration(object):
         print "#" * 40
         for server in self.servers:
             print server
+
+    def insert_config(self):
+        print "start to test"
+        print "\n"
+        for i, flows in self.fw.iteritems():
+            for flow in flows:
+                print i, flow[0], flow[1]
+        print '\n' 
+        print 'start insert test' 
+        print '\n'       
+        for natid, members in self.nat_memberships.iteritems():
+            yicesinsertscript1 = '''(define X::int)
+(define Y::int)
+(define S::int)
+(define T::int)
+(assert (= Y T))
+(assert (= X S))'''
+            inatstatement1="(assert (or"
+            inatstatement2=" (= X "
+            inatstatement3=")"
+            inatstatement4="))"
+            inatstatement0=inatstatement1
+            if len(members)==1:
+                inatstatement0="(assert (= X "+str(members[0][1:])+"))"
+            else:    
+                for member in members:
+                    inatstatement=inatstatement2+str(member[1:])+inatstatement3
+                    inatstatement0=inatstatement0+inatstatement
+                inatstatement0=inatstatement0+inatstatement4
+            for i, flows in self.fw.iteritems():
+                ifwstatement1="(assert (or"
+                ifwstatement2=" (and"
+                ifwstatement3=" (= S "
+                ifwstatement4=") (= T "
+                ifwstatement5="))"
+                ifwstatement6="))"
+                ifwstatement0=ifwstatement1
+                if len(flows)==0:
+                    ifwstatement0=""
+                elif len(flows)==1:
+                    fl=list(flows)
+                    ifwstatement0="(assert (and (= S "+str(fl[0][0][1:])+") (= T "+str(fl[0][1][1:])+")))"
+                else:
+                    for flow in flows:
+                        ifwstatement=ifwstatement2+ifwstatement3+str(flow[0][1:])+ifwstatement4+str(flow[1][1:])+ifwstatement5
+                        ifwstatement0=ifwstatement0+ifwstatement
+                    ifwstatement0=ifwstatement0+ifwstatement6   
+                #print "\n"    
+                #print members
+                #print flows    
+                #print natstatement0
+                #print '\n'
+                #print fwstatement0    
+                yicesinsertscript=yicesinsertscript1+'\n'+inatstatement0+'\n'+ifwstatement0+'\n'+'(check)\n'+'(show-model)\n'
+                #print yices_script
+                yicesinsertfile="nattest.ys"
+                fyices=open(yicesinsertfile,'w')
+                fyices.write(yicesinsertscript)
+                fyices.close()
+                starttime = datetime.datetime.now()
+                os.system("yices "+yicesinsertfile)
+                endtime = datetime.datetime.now()
+                ftxt=open("natinsert.txt",'a')
+                t=(endtime - starttime).microseconds/1000 #millisecomd
+                statement="NAT"+str(natid)+" and FW"+str(i)+" YICES execution time:"
+                print statement+str(t)+'\n'
+                ftxt.write('#'+statement+'\n')
+                ftxt.write(str(t)+'\n')
+                ftxt.close()
+
+    def delete_config(self):
+        print 'start delete test'
+        print '\n'
+        for i, flows in self.fw.iteritems():
+            yicesdeletescript1 = '''(define X::int)
+(define Y::int)
+(define S::int)
+(define T::int)
+(assert (= Y T))'''
+            dfwstatement1="(assert (or"
+            dfwstatement2=" (and"
+            dfwstatement3=" (= X "
+            dfwstatement4=") (= Y "
+            dfwstatement5="))"
+            dfwstatement6="))"
+            dfwstatement0=dfwstatement1
+            if len(flows)==0:
+                dfwstatement0=""
+            elif len(flows)==1:
+                fl=list(flows)
+                dfwstatement0="(assert (and (= X "+str(fl[0][0][1:])+") (= Y "+str(fl[0][1][1:])+")))"
+            else:
+                for flow in flows:
+                    dfwstatement=dfwstatement2+dfwstatement3+str(flow[0][1:])+dfwstatement4+str(flow[1][1:])+dfwstatement5
+                    dfwstatement0=dfwstatement0+dfwstatement
+                dfwstatement0=dfwstatement0+dfwstatement6
+            for natid, members in self.nat_memberships.iteritems():
+                dnatstatement1="(assert (or"
+                dnatstatement2=" (= T "
+                dnatstatement3=")"
+                dnatstatement4="))"
+                dnatstatement0=dnatstatement1
+                if len(members)==1:
+                    dnatstatement0="(assert (= T "+str(members[0][1:])+"))"
+                else:    
+                    for member in members:
+                        dnatstatement=dnatstatement2+str(member[1:])+dnatstatement3
+                        dnatstatement0=dnatstatement0+dnatstatement
+                    dnatstatement0=dnatstatement0+dnatstatement4
+                yicesdeletescript=yicesdeletescript1+'\n'+dfwstatement0+'\n'+dnatstatement0+'\n'+'(check)\n'+'(show-model)\n'
+                #print yicesdeletescript
+                yicesfile="fwtest.ys"
+                fyices=open(yicesfile,'w')
+                fyices.write(yicesdeletescript)
+                fyices.close()
+                starttime = datetime.datetime.now()
+                os.system("yices "+yicesfile)
+                endtime = datetime.datetime.now()
+                ftxt=open("fwdelete.txt",'a')
+                t=(endtime - starttime).microseconds/1000 #millisecomd
+                statement="FW"+str(i)+" and NAT"+str(natid)+" YICES execution time:"
+                print statement+str(t)+'\n'
+                ftxt.write('#'+statement+'\n')
+                ftxt.write(str(t)+'\n')
+                ftxt.close()                 
 
 class Switch(object):
     def __init__(self, name, ip="10.1.0.0"):
@@ -287,7 +414,18 @@ def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.05):
 
     config = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
     config.print_config()
-    return config
+    config1 = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
+    config1.insert_config()
+    yicesdata1="insert_toposize_"+str(toposize)+"_natnum_"+str(num_nat)+"_fwnum_"+str(num_fw)
+    shutil.copyfile("natinsert.txt",yicesdata1+".txt")
+    open("natinsert.txt","w").close()
+    config2 = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
+    config2.delete_config()
+    yicesdata2="delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)
+    shutil.copyfile("fwdelete.txt",yicesdata2+".txt")
+    open("fwdelete.txt","w").close()
+    return config,config1,config2
+ 
 
 if __name__ == "__main__":
     parser = optParser()
