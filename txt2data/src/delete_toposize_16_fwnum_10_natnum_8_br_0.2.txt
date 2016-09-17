@@ -1,0 +1,160 @@
+#FW0 and NAT0 YICES execution time:
+13.372
+#FW0 and NAT1 YICES execution time:
+183.392
+#FW0 and NAT2 YICES execution time:
+13.678
+#FW0 and NAT3 YICES execution time:
+193.922
+#FW0 and NAT4 YICES execution time:
+21.529
+#FW0 and NAT5 YICES execution time:
+178.116
+#FW0 and NAT6 YICES execution time:
+17.333
+#FW0 and NAT7 YICES execution time:
+176.723
+#FW1 and NAT0 YICES execution time:
+212.809
+#FW1 and NAT1 YICES execution time:
+15.631
+#FW1 and NAT2 YICES execution time:
+208.18
+#FW1 and NAT3 YICES execution time:
+24.392
+#FW1 and NAT4 YICES execution time:
+260.538
+#FW1 and NAT5 YICES execution time:
+17.742
+#FW1 and NAT6 YICES execution time:
+246.511
+#FW1 and NAT7 YICES execution time:
+13.957
+#FW2 and NAT0 YICES execution time:
+8.966
+#FW2 and NAT1 YICES execution time:
+64.598
+#FW2 and NAT2 YICES execution time:
+29.034
+#FW2 and NAT3 YICES execution time:
+67.786
+#FW2 and NAT4 YICES execution time:
+11.533
+#FW2 and NAT5 YICES execution time:
+84.287
+#FW2 and NAT6 YICES execution time:
+17.622
+#FW2 and NAT7 YICES execution time:
+81.421
+#FW3 and NAT0 YICES execution time:
+50.522
+#FW3 and NAT1 YICES execution time:
+16.126
+#FW3 and NAT2 YICES execution time:
+50.344
+#FW3 and NAT3 YICES execution time:
+11.543
+#FW3 and NAT4 YICES execution time:
+53.057
+#FW3 and NAT5 YICES execution time:
+12.043
+#FW3 and NAT6 YICES execution time:
+56.687
+#FW3 and NAT7 YICES execution time:
+11.772
+#FW4 and NAT0 YICES execution time:
+16.253
+#FW4 and NAT1 YICES execution time:
+97.977
+#FW4 and NAT2 YICES execution time:
+16.999
+#FW4 and NAT3 YICES execution time:
+96.758
+#FW4 and NAT4 YICES execution time:
+16.263
+#FW4 and NAT5 YICES execution time:
+105.68
+#FW4 and NAT6 YICES execution time:
+10.845
+#FW4 and NAT7 YICES execution time:
+98.343
+#FW5 and NAT0 YICES execution time:
+307.003
+#FW5 and NAT1 YICES execution time:
+14.199
+#FW5 and NAT2 YICES execution time:
+321.344
+#FW5 and NAT3 YICES execution time:
+18.02
+#FW5 and NAT4 YICES execution time:
+319.117
+#FW5 and NAT5 YICES execution time:
+66.448
+#FW5 and NAT6 YICES execution time:
+383.341
+#FW5 and NAT7 YICES execution time:
+15.129
+#FW6 and NAT0 YICES execution time:
+25.479
+#FW6 and NAT1 YICES execution time:
+261.545
+#FW6 and NAT2 YICES execution time:
+14.505
+#FW6 and NAT3 YICES execution time:
+219.655
+#FW6 and NAT4 YICES execution time:
+12.135
+#FW6 and NAT5 YICES execution time:
+209.901
+#FW6 and NAT6 YICES execution time:
+22.837
+#FW6 and NAT7 YICES execution time:
+221.938
+#FW7 and NAT0 YICES execution time:
+145.066
+#FW7 and NAT1 YICES execution time:
+13.657
+#FW7 and NAT2 YICES execution time:
+143.389
+#FW7 and NAT3 YICES execution time:
+21.216
+#FW7 and NAT4 YICES execution time:
+137.0
+#FW7 and NAT5 YICES execution time:
+11.275
+#FW7 and NAT6 YICES execution time:
+143.156
+#FW7 and NAT7 YICES execution time:
+15.964
+#FW8 and NAT0 YICES execution time:
+13.046
+#FW8 and NAT1 YICES execution time:
+152.221
+#FW8 and NAT2 YICES execution time:
+16.079
+#FW8 and NAT3 YICES execution time:
+191.614
+#FW8 and NAT4 YICES execution time:
+17.106
+#FW8 and NAT5 YICES execution time:
+171.992
+#FW8 and NAT6 YICES execution time:
+10.208
+#FW8 and NAT7 YICES execution time:
+166.551
+#FW9 and NAT0 YICES execution time:
+239.942
+#FW9 and NAT1 YICES execution time:
+15.504
+#FW9 and NAT2 YICES execution time:
+220.243
+#FW9 and NAT3 YICES execution time:
+15.48
+#FW9 and NAT4 YICES execution time:
+221.933
+#FW9 and NAT5 YICES execution time:
+13.816
+#FW9 and NAT6 YICES execution time:
+221.741
+#FW9 and NAT7 YICES execution time:
+19.361
