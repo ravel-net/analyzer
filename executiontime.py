@@ -6,7 +6,7 @@
 # a fattree topology with 8 pods, 10 FWs, and 10 NATs
 # where the FW will block 20% of possible host (src,dst) combinations:
 #    ./irreasoning.py --toposize 8 --fw 10 --nat 10 --blockrate 0.2
-
+import math
 import os
 import random
 import sys
@@ -14,10 +14,10 @@ import struct
 import socket
 import networkx
 import shutil
+import math
 import datetime
 
 from optparse import OptionParser
-
 def next_ip(base, offset):
     ipint = struct.unpack('!I', socket.inet_aton(base))[0]
     ipint += offset
@@ -87,19 +87,15 @@ class Configuration(object):
 
     def insert_config(self):
         print "start to test"
-        print "\n"
-        for i, flows in self.fw.iteritems():
-            for flow in flows:
-                print i, flow[0], flow[1]
         print '\n' 
         print 'start insert test' 
         print '\n'       
         for natid, members in self.nat_memberships.iteritems():
             yicesinsertscript1 = '''(define X::int)
-(define Y::int)
-(define S::int)
-(define T::int)
-(assert (= Y T))
+(define Y::int)'''
+            yicesinsertscript2='''(define S::int)
+(define T::int)'''
+            yicesinsertscript3='''(assert (= Y T))
 (assert (= X S))'''
             inatstatement1="(assert (or"
             inatstatement2=" (= X "
@@ -137,17 +133,29 @@ class Configuration(object):
                 #print natstatement0
                 #print '\n'
                 #print fwstatement0    
-                yicesinsertscript=yicesinsertscript1+'\n'+inatstatement0+'\n'+ifwstatement0+'\n'+'(check)\n'+'(show-model)\n'
-                #print yices_script
+                yicesinsertscript=yicesinsertscript1+'\n'+inatstatement0+'\n'+yicesinsertscript2+'\n'+ifwstatement0+'\n'+yicesinsertscript3+'\n'+'(check)\n'
+                #+'(show-model)\n'
+                #print yicesinsertscript
                 yicesinsertfile="nattest.ys"
                 fyices=open(yicesinsertfile,'w')
                 fyices.write(yicesinsertscript)
                 fyices.close()
                 starttime = datetime.datetime.now()
-                os.system("yices "+yicesinsertfile)
+                result=os.popen("yices "+yicesinsertfile).read()[0] 
                 endtime = datetime.datetime.now()
+                print 'output: ',result 
+                fsat=open("natinsertsat.txt",'a') 
+                funsat=open("natinsertunsat.txt",'a')                 
                 ftxt=open("natinsert.txt",'a')
-                t=(endtime - starttime).microseconds/1000 #millisecomd
+                t=1000*(endtime - starttime).total_seconds()#millisecomd
+                #if t > 10:
+                    #print yicesinsertscript
+                if str(result)=='s':
+                    print 'true'
+                    fsat.write(str(t)+';0\n') 
+                else:
+                    print 'false'
+                    funsat.write(str(t)+';0\n')  
                 statement="NAT"+str(natid)+" and FW"+str(i)+" YICES execution time:"
                 print statement+str(t)+'\n'
                 ftxt.write('#'+statement+'\n')
@@ -159,10 +167,9 @@ class Configuration(object):
         print '\n'
         for i, flows in self.fw.iteritems():
             yicesdeletescript1 = '''(define X::int)
-(define Y::int)
-(define S::int)
-(define T::int)
-(assert (= Y T))'''
+(define Y::int)'''
+            yicesdeletescript2 = '''(define S::int)
+(define T::int)'''
             dfwstatement1="(assert (or"
             dfwstatement2=" (and"
             dfwstatement3=" (= X "
@@ -193,22 +200,38 @@ class Configuration(object):
                         dnatstatement=dnatstatement2+str(member[1:])+dnatstatement3
                         dnatstatement0=dnatstatement0+dnatstatement
                     dnatstatement0=dnatstatement0+dnatstatement4
-                yicesdeletescript=yicesdeletescript1+'\n'+dfwstatement0+'\n'+dnatstatement0+'\n'+'(check)\n'+'(show-model)\n'
-                #print yicesdeletescript
+                yicesdeletescript=yicesdeletescript1+'\n'+dfwstatement0+'\n'+yicesdeletescript2+'\n'+dnatstatement0+'\n'+'(assert (= Y T))\n(check)\n'
+                #+'(show-model)\n'
+                
                 yicesfile="fwtest.ys"
                 fyices=open(yicesfile,'w')
                 fyices.write(yicesdeletescript)
                 fyices.close()
                 starttime = datetime.datetime.now()
-                os.system("yices "+yicesfile)
+                result=os.popen("yices "+yicesfile).read()[0]
                 endtime = datetime.datetime.now()
+                print 'output: ',result
+                fsat=open("fwdeletesat.txt",'a') 
+                funsat=open("fwdeleteunsat.txt",'a')                 
                 ftxt=open("fwdelete.txt",'a')
-                t=(endtime - starttime).microseconds/1000 #millisecomd
+                t=1000*(endtime - starttime).total_seconds() #millisecomd
+                #if t>10:
+                    #print yicesdeletescript
+                if str(result)=='s':
+                    print 'true'
+                    fsat.write(str(t)+';0\n') 
+                else:
+                    print 'false'
+                    funsat.write(str(t)+';0\n') 
                 statement="FW"+str(i)+" and NAT"+str(natid)+" YICES execution time:"
                 print statement+str(t)+'\n'
                 ftxt.write('#'+statement+'\n')
                 ftxt.write(str(t)+'\n')
-                ftxt.close()                 
+                ftxt.close()
+                #if str(result)=='u':
+                    #print "stop"
+                    #raw_input()                    
+             
 
 class Switch(object):
     def __init__(self, name, ip="10.1.0.0"):
@@ -299,9 +322,10 @@ def optParser():
                       help="Number of FW instance (default: 10)")
     parser.add_option("--nat", "-n", type="string", default=10,
                       help="Number of NAT instances (default: 10)")
-    parser.add_option("--blockrate", "-b", type="string", default=0.05,
+    parser.add_option("--blockrate", "-b", type="string", default=0.2,
                       help="Percentage of node pairs to block with FW (default 0.05)")
-
+    parser.add_option("--path", "-p", type="string", default="/Users/suhanjiang/Desktop",
+                      help="Choose the path to create a floder to get all execution time (default /Users/suhanjiang/Desktop)")
     return parser
 
 def assign_fw_flows_global(num_fw, flows):
@@ -340,7 +364,6 @@ def assign_fw_flows_global(num_fw, flows):
     return divisions
 
 def assign_fw_flows(num_fw, blockrate, servers, clients):
-    per_fw_count = int(len(servers) * len(clients) * blockrate / num_fw)
     divisions = {}
     for i in range(num_fw):
         divisions[i] = [[], []]
@@ -350,25 +373,36 @@ def assign_fw_flows(num_fw, blockrate, servers, clients):
 
     for i, client in enumerate(clients):
         divisions[i % num_fw][1].append(client)
-
+    #print divisions
     blacklist = {}
+    #blacklistsc = {}
+    #blacklistcs = {}
     for i in range(num_fw):
         blacklist[i] = set()
+        blacklistsc = set()
+        blacklistcs = set()
 
         # there might not be enough possible server-flow combinations within
         # each FW instances managed IP range, so only block as many as possible
-        max_blocks = len(divisions[i][0]) * len(divisions[i][1])
-        for j in 2*range(max_blocks):
-            if len(blacklist[i]) > per_fw_count:
-                break
-
+        max_blocks = int(len(divisions[i][0]) * len(divisions[i][1])*blockrate)
+        #print max_blocks
+        for j in range(max_blocks):
+            #if len(blacklistsc) >= per_fw_count:
+                #break
             s = random.choice(divisions[i][0])
             c = random.choice(divisions[i][1])
-            blacklist[i].add((s,c))
-
+            blacklistsc.add((s,c))   
+        for j in range(max_blocks):
+            #if len(blacklistcs) >= per_fw_count:
+                #break
+            s = random.choice(divisions[i][0])
+            c = random.choice(divisions[i][1])
+            blacklistcs.add((c,s))            
+        blacklist[i]=blacklistcs|blacklistsc
+        #print blacklist[i]
     return blacklist
 
-def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.05):
+def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.2):
     toposize = int(toposize)
     num_fw = int(num_fw)
     num_nat = int(num_nat)
@@ -416,16 +450,29 @@ def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.05):
     config.print_config()
     config1 = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
     config1.insert_config()
-    yicesdata1="insert_toposize_"+str(toposize)+"_natnum_"+str(num_nat)+"_fwnum_"+str(num_fw)
+    yicesdata1=path+"/src/insert_toposize_"+str(toposize)+"_natnum_"+str(num_nat)+"_fwnum_"+str(num_fw)+"_br_"+str(blockrate)
     shutil.copyfile("natinsert.txt",yicesdata1+".txt")
     open("natinsert.txt","w").close()
+    yicesdata2=path+"/dst/sat_insert_toposize_"+str(toposize)+"_natnum_"+str(num_nat)+"_fwnum_"+str(num_fw)+"_br_"+str(blockrate)
+    shutil.copyfile("natinsertsat.txt",yicesdata2+".txt")
+    open("natinsertsat.txt","w").close()   
+    yicesdata3=path+"/dst/unsat_insert_toposize_"+str(toposize)+"_natnum_"+str(num_nat)+"_fwnum_"+str(num_fw)+"_br_"+str(blockrate)
+    shutil.copyfile("natinsertunsat.txt",yicesdata3+".txt")
+    open("natinsertunsat.txt","w").close() 
     config2 = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
     config2.delete_config()
-    yicesdata2="delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)
-    shutil.copyfile("fwdelete.txt",yicesdata2+".txt")
+    yicesdata4=path+"/src/delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
+    shutil.copyfile("fwdelete.txt",yicesdata4+".txt")
     open("fwdelete.txt","w").close()
+    yicesdata5=path+"/dst/sat_delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
+    shutil.copyfile("fwdeletesat.txt",yicesdata5+".txt")
+    open("fwdeletesat.txt","w").close()   
+    yicesdata6=path+"/dst/unsat_delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
+    shutil.copyfile("fwdeleteunsat.txt",yicesdata6+".txt")
+    open("fwdeleteunsat.txt","w").close()
+    print "servernum,clientnum,natvolume,fwvolume"
+    print len(servers),len(clients),len(nat_members[0]),len(fw_divisions[0])
     return config,config1,config2
- 
 
 if __name__ == "__main__":
     parser = optParser()
@@ -433,5 +480,11 @@ if __name__ == "__main__":
     if args:
         parser.print_help()
         sys.exit(0)
-
+    path=opts.path+"/txt2data"
+    list=['src','dst','plt','pdf']
+    for i in list:
+        newpath=((path+'/%s')%(i))
+        if not os.path.exists(newpath): os.makedirs(newpath)     
     generate(opts.toposize, opts.fw, opts.nat, opts.blockrate)
+
+
