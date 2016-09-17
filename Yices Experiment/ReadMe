@@ -1,0 +1,23 @@
+This file contains two python files: executiontime.py and plotgen.py
+
+1.executiontime.py
+
+This file has three main functions. First, it generates configurations for ravel irrelevance reasoning test. Second, it uses yices solver to find about the relation (1)between fw deletion and nat view and (2)between nat insertion and fw view. Third, it collects all execution time that yices uses to determine relations and save in a folder called "txt2data".
+
+When running codes in this part, use the format below:
+
+python executiontime.py --fw 10 --nat 8 --topo 16 --blockrate 0.2 --path /Users/suhanjiang/Desktop
+
+Parameter "path" is used to determine where you want to save your folder "txt2data".
+In the folder "txt2data", there are four folders:src, dst, plt, pdf. After running executiontime.py, you will get some files in "src" and "dst" in "txt2data".
+
+2.plotgen.py
+
+This file's key function is to use gnuplot to plot cdf. When running codes in this part, use the format below:
+
+python plotgen.py --path /Users/suhanjiang/Desktop
+
+"path" input here is the same as executiontime.py
+After running plotgen.py, you will get all cdf pictures in "pdf" in "txt2data".
+
+In a cdf picture, you will see two kinds of nodes with green and blue in x axis. Blue nodes represent all execution time of getting an unsat result. Green nodes represent all execution time of getting a sat result. 
