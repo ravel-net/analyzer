@@ -1,0 +1,5 @@
+(define X::int)
+(define Y::int)
+(assert (forall (X::int Y::int) (=>(or (= X 100026) (= X 100022) (= X 100037))(or(and(not(or (and (= X 32) (= Y 24)) (and (= X 20) (= Y 21)) (and (= X 35) (= Y 32))))(not(or (and (= (- X 100001) 32) (= Y 24)) (and (= (- X 100001) 20) (= Y 21)) (and (= (- X 100001) 35) (= Y 32)))))(and(or (and (= X 32) (= Y 24)) (and (= X 20) (= Y 21)) (and (= X 35) (= Y 32)))(or (and (= (- X 100001) 32) (= Y 24)) (and (= (- X 100001) 20) (= Y 21)) (and (= (- X 100001) 35) (= Y 32)))(= X (- X 100001)))))))
+(ef-solve)
+(show-model)
