@@ -124,7 +124,7 @@ set output'''
             newplt=pltname.replace('src','plt')
             shutil.move(pltname, newplt)
             #print newplt
-            os.system("gnuplot "+newplt)
+            os.system("gnuplot "+newplt)          
                             
 def getfiles():
     files=os.listdir(path+"/src")

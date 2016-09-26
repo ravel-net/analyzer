@@ -5,7 +5,7 @@
 # Running no params is equivalent to generating
 # a fattree topology with 8 pods, 10 FWs, and 10 NATs
 # where the FW will block 20% of possible host (src,dst) combinations:
-# python executiontime.py --fw 2 --nat 2 --topo 4 --blockrate 0.2 --path /Users/suhanjiang/Desktop
+#    ./irreasoning.py --toposize 8 --fw 10 --nat 10 --blockrate 0.2
 import math
 import os
 import random
@@ -89,7 +89,8 @@ class Configuration(object):
         print "start to test"
         print '\n' 
         print 'start insert test' 
-        print '\n'       
+        print '\n' 
+        r=open("insert.txt",'a')       
         for natid, members in self.nat_memberships.iteritems():
             yicesinsertscript1 = '''(define X::int)
 (define Y::int)'''
@@ -136,31 +137,30 @@ class Configuration(object):
                 yicesinsertscript=yicesinsertscript1+'\n'+inatstatement0+'\n'+yicesinsertscript2+'\n'+ifwstatement0+'\n'+yicesinsertscript3+'\n'+'(check)\n'
                 #+'(show-model)\n'
                 #print yicesinsertscript
-                yicesinsertfile="nattest.ys"
+                yicesinsertfile="natin.ys"
                 fyices=open(yicesinsertfile,'w')
+                r.write(yicesinsertscript)
+                
                 fyices.write(yicesinsertscript)
                 fyices.close()
                 starttime = datetime.datetime.now()
                 result=os.popen("yices "+yicesinsertfile).read()[0] 
                 endtime = datetime.datetime.now()
-                print 'output: ',result 
-                fsat=open("natinsertsat.txt",'a') 
-                funsat=open("natinsertunsat.txt",'a')                 
-                ftxt=open("natinsert.txt",'a')
+                print 'output: ',result                
+                ftxt=open("natin.txt",'a')
                 t=1000*(endtime - starttime).total_seconds()#millisecomd
                 #if t > 10:
-                    #print yicesinsertscript
-                if str(result)=='s':
-                    print 'true'
-                    fsat.write(str(t)+';0\n') 
-                else:
-                    print 'false'
-                    funsat.write(str(t)+';0\n')  
+                    #print yicesmodifyscript
                 statement="NAT"+str(natid)+" and FW"+str(i)+" YICES execution time:"
                 print statement+str(t)+'\n'
-                ftxt.write('#'+statement+'\n')
-                ftxt.write(str(t)+'\n')
+                if str(result)=='s':
+                    ftxt.write('#'+statement+'\n')
+                    ftxt.write('0;'+str(t)+'\n') 
+                else:
+                    ftxt.write('#'+statement+'\n')                    
+                    ftxt.write('1;'+str(t)+'\n')
                 ftxt.close()
+        r.close()         
 
     def delete_config(self):
         print 'start delete test'
@@ -210,24 +210,21 @@ class Configuration(object):
                 starttime = datetime.datetime.now()
                 result=os.popen("yices "+yicesfile).read()[0]
                 endtime = datetime.datetime.now()
-                print 'output: ',result
-                fsat=open("fwdeletesat.txt",'a') 
-                funsat=open("fwdeleteunsat.txt",'a')                 
+                print 'output: ',result                  
                 ftxt=open("fwdelete.txt",'a')
-                t=1000*(endtime - starttime).total_seconds() #millisecomd
-                #if t>10:
-                    #print yicesdeletescript
-                if str(result)=='s':
-                    print 'true'
-                    fsat.write(str(t)+';0\n') 
-                else:
-                    print 'false'
-                    funsat.write(str(t)+';0\n') 
+                t=1000*(endtime - starttime).total_seconds()#millisecomd
+                #if t > 10:
+                    #print yicesmodifyscript
+  
                 statement="FW"+str(i)+" and NAT"+str(natid)+" YICES execution time:"
                 print statement+str(t)+'\n'
-                ftxt.write('#'+statement+'\n')
-                ftxt.write(str(t)+'\n')
-                ftxt.close()
+                if str(result)=='s':
+                    ftxt.write('#'+statement+'\n')
+                    ftxt.write('0;'+str(t)+'\n') 
+                else:
+                    ftxt.write('#'+statement+'\n')                    
+                    ftxt.write('1;'+str(t)+'\n')
+                ftxt.close() 
                 #if str(result)=='u':
                     #print "stop"
                     #raw_input()                    
@@ -235,7 +232,8 @@ class Configuration(object):
         print "start to test"
         print '\n' 
         print 'start modify test' 
-        print '\n'       
+        print '\n'     
+        #r=open("modify.txt",'a')  
         for natid, members in self.nat_memberships.iteritems():
             yicesmodifyscript1= '''(define X::int)
 (define Y::int)
@@ -248,10 +246,14 @@ class Configuration(object):
             natstatement4=")"
             natstatement0=natstatement1
             if len(members)==1:
-                natstatement0="(= X "+str(self.topo.hosts[member].ip.replace('.',''))+")"
+                n=int(member[1:])
+                privateIP=100001+n
+                natstatement0="(= X "+str(privateIP)+")"
             else:    
                 for member in members:
-                    natstatement=natstatement2+str(self.topo.hosts[member].ip.replace('.',''))+natstatement3
+                    n=int(member[1:])
+                    privateIP=100001+n
+                    natstatement=natstatement2+str(privateIP)+natstatement3
                     natstatement0=natstatement0+natstatement
                 natstatement0=natstatement0+natstatement4
             for i, flows in self.fw.iteritems():
@@ -272,6 +274,9 @@ class Configuration(object):
                     fl=list(flows)
                     condition=" (and (= X "+str(fl[0][0][1:])+") (= Y "+str(fl[0][1][1:])+"))"
                     conditionfm=" (and (= (- X 100001) "+str(fl[0][0][1:])+") (= Y "+str(fl[0][1][1:])+"))"
+                    fwstatement1="(or(and"+common0+condition+")"+common0+conditionfm+"))"
+                    fwstatement2="(and"+condition+conditionfm+"(= X (- X 100001))))"
+                    fwstatement=fwstatement1+fwstatement2
                 else:
                     for flow in flows:
                         condition0=common2+condition1+str(flow[0][1:])+common3+str(flow[1][1:])+"))"
@@ -280,39 +285,38 @@ class Configuration(object):
                         conditionfm=conditionfm+conditionfm0
                     condition=condition+")"  
                     conditionfm=conditionfm+")" 
-                fwstatement1="(or(and"+common0+condition+")"+common0+conditionfm+"))"
-                fwstatement2="(and"+condition+conditionfm+"(= X (- X 100001))))"
-                fwstatement=fwstatement1+fwstatement2
+                    fwstatement1="(or(and"+common0+condition+")"+common0+conditionfm+"))"
+                    fwstatement2="(and"+condition+conditionfm+"(= X (- X 100001))))"
+                    fwstatement=fwstatement1+fwstatement2
                 yicesmodifyscript=yicesmodifyscript1+natstatement0+fwstatement+")))\n"+yicesmodifyscript2
                 #print yicesmodifyscript
                 #+'(show-model)\n'
                 #print yicesmodifyscript
                 yicesmodifyfile="nattest.ys"
                 fyices=open(yicesmodifyfile,'w')
+                #r.write(yicesmodifyscript)                
                 fyices.write(yicesmodifyscript)
                 fyices.close() 
                 starttime = datetime.datetime.now()
                 result=os.popen("yices --mode=ef "+yicesmodifyfile).read()[0] 
                 #os.system("yices --mode=ef "+yicesmodifyfile)
                 endtime = datetime.datetime.now()
-                print 'output: ',result 
-                fsat=open("natmodifysat.txt",'a') 
-                funsat=open("natmodifyunsat.txt",'a')                 
+                print 'output: ',result                  
                 ftxt=open("natmodify.txt",'a')
                 t=1000*(endtime - starttime).total_seconds()#millisecomd
                 #if t > 10:
                     #print yicesmodifyscript
-                if str(result)=='s':
-                    print 'true'
-                    fsat.write(str(t)+';0\n') 
-                else:
-                    print 'false'
-                    funsat.write(str(t)+';0\n')  
+  
                 statement="NAT"+str(natid)+" and FW"+str(i)+" YICES execution time:"
                 print statement+str(t)+'\n'
-                ftxt.write('#'+statement+'\n')
-                ftxt.write(str(t)+'\n')
-                ftxt.close()          
+                if str(result)=='s':
+                    ftxt.write('#'+statement+'\n')
+                    ftxt.write('0;'+str(t)+'\n') 
+                else:
+                    ftxt.write('#'+statement+'\n')                    
+                    ftxt.write('1;'+str(t)+'\n')                    
+                ftxt.close()
+        #r.close()                        
 
 class Switch(object):
     def __init__(self, name, ip="10.1.0.0"):
@@ -531,29 +535,34 @@ def generate(toposize=8, num_fw=4, num_nat=4, blockrate=0.2):
     config.print_config()
     config1 = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
     config1.modify_config()
-    yicesdata1=path+"/src/modify_toposize_"+str(toposize)+"_natnum_"+str(num_nat)+"_fwnum_"+str(num_fw)+"_br_"+str(blockrate)
+    yicesdata1=path+"/src/modify_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
     shutil.copyfile("natmodify.txt",yicesdata1+".txt")
     open("natmodify.txt","w").close()
-    yicesdata2=path+"/dst/sat_modify_toposize_"+str(toposize)+"_natnum_"+str(num_nat)+"_fwnum_"+str(num_fw)+"_br_"+str(blockrate)
-    shutil.copyfile("natmodifysat.txt",yicesdata2+".txt")
-    open("natmodifysat.txt","w").close()   
-    yicesdata3=path+"/dst/unsat_modify_toposize_"+str(toposize)+"_natnum_"+str(num_nat)+"_fwnum_"+str(num_fw)+"_br_"+str(blockrate)
-    shutil.copyfile("natmodifyunsat.txt",yicesdata3+".txt")
-    open("natmodifyunsat.txt","w").close() 
+    #yicesdata2=path+"/dst/sat_modify_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
+    #shutil.copyfile("natmodifysat.txt",yicesdata2+".txt")
+    #open("natmodifysat.txt","w").close()   
+    #yicesdata3=path+"/dst/unsat_modify_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
+    #shutil.copyfile("natmodifyunsat.txt",yicesdata3+".txt")
+    #open("natmodifyunsat.txt","w").close() 
     config2 = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
     config2.delete_config()
     yicesdata4=path+"/src/delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
     shutil.copyfile("fwdelete.txt",yicesdata4+".txt")
     open("fwdelete.txt","w").close()
-    yicesdata5=path+"/dst/sat_delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
-    shutil.copyfile("fwdeletesat.txt",yicesdata5+".txt")
-    open("fwdeletesat.txt","w").close()   
-    yicesdata6=path+"/dst/unsat_delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
-    shutil.copyfile("fwdeleteunsat.txt",yicesdata6+".txt")
-    open("fwdeleteunsat.txt","w").close()
+    #config3 = Configuration(clients, servers, fw_divisions, nat, nat_members, topo)
+    #config3.insert_config()
+    #yicesdata7=path+"/src/insert_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
+    #shutil.copyfile("natin.txt",yicesdata7+".txt")
+    #open("natin.txt","w").close()
+    #yicesdata5=path+"/dst/sat_delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
+    #shutil.copyfile("fwdeletesat.txt",yicesdata5+".txt")
+    #open("fwdeletesat.txt","w").close()   
+    #yicesdata6=path+"/dst/unsat_delete_toposize_"+str(toposize)+"_fwnum_"+str(num_fw)+"_natnum_"+str(num_nat)+"_br_"+str(blockrate)
+    #shutil.copyfile("fwdeleteunsat.txt",yicesdata6+".txt")
+    #open("fwdeleteunsat.txt","w").close()
     print "servernum,clientnum,natvolume,fwvolume"
     print len(servers),len(clients),len(nat_members[0]),len(fw_divisions[0])
-    return config,config1,config2
+    return config,config1,config2#,config3
 
 if __name__ == "__main__":
     parser = optParser()
