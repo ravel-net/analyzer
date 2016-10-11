@@ -1,0 +1,47 @@
+NAT modifies hostIP to servicID VS FW violation view
+Fm:the condition of NAT modify operation
+F:FW view's selection condition
+a modified tuple will not affect FW violation view if one of the following conditions applies: 
+(1)it does not qualify for FW violation view, either before or after the modification; 
+(2)it does qualify for FW violation view both before and after the modification, but all the attributes visible in FW violation view remain unchanged.
+
+Example(see explanation below)
+(define X::int)
+(define Y::int)
+(assert (forall (X::int Y::int) (=>(or (= X 100030) (= X 100028) (= X 100024) (= X 100031))(or(and(not(or (and (= X 25) (= Y 24)) (and (= X 35) (= Y 25))))(not(or (and (= (- X 100001) 25) (= Y 24)) (and (= (- X 100001) 35) (= Y 25)))))(and(or (and (= X 25) (= Y 24)) (and (= X 35) (= Y 25)))(or (and (= (- X 100001) 25) (= Y 24)) (and (= (- X 100001) 35) (= Y 25)))(= X (- X 100001)))))))
+(ef-solve)
+(show-model)
+
+
+Example explanation:
+;;(X,Y) is (src,dst) in rm
+
+;;(or (= X 100030) (= X 100028) (= X 100024) (= X 100031))
+;;this sentence represents NAT modify condition
+
+(1)
+;;(not(or (and (= X 25) (= Y 24)) (and (= X 35) (= Y 25))))
+;;not qualify for FW violation view before modification
+
+;;(not(or (and (= (- X 100001) 25) (= Y 24)) (and (= (- X 100001) 35) (= Y 25))))
+;;not qualify for FW violation view after modification
+
+;;(and(not(or (and (= X 25) (= Y 24)) (and (= X 35) (= Y 25))))(not(or (and (= (- X 100001) 25) (= Y 24)) (and (= (- X 100001) 35) (= Y 25)))))
+;;this sentence represents the irrelevant condition(1):not qualify for FW violation view, either before or after the modification
+
+(2)
+;;(or (and (= X 25) (= Y 24)) (and (= X 35) (= Y 25)))
+;;qualify for FW violation view before modification
+
+;;(or (and (= (- X 100001) 25) (= Y 24)) (and (= (- X 100001) 35) (= Y 25)))
+;;qualify for FW violation view after modification
+
+;;(= X (- X 100001))
+;;all the attributes visible in FW violation view remain unchanged.PS:(= Y Y) following (= X (- X 100001)) has been deleted for simplification.
+
+;;(and(or (and (= X 25) (= Y 24)) (and (= X 35) (= Y 25)))(or (and (= (- X 100001) 25) (= Y 24)) (and (= (- X 100001) 35) (= Y 25)))(= X (- X 100001)))))))
+;;this sentence represents the irrelevant condition(2):
+qualify for FW violation view both before and after the modification, but all the attributes visible in FW violation view remain unchanged.
+
+
+
