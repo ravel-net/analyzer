@@ -31,14 +31,16 @@ A drop rule in Pyretic maps to an entry in the view `pyr_APPNAME_drops`.  For ex
 
 This will translate to a row in the policy table `pyr_pyfw_policy` with the values:
 
-** pyr_pyfw_policy **  
+**pyr_pyfw_policy**
+
 | id  | srcip    | dstip    | drop |
 |-----|----------|----------|------|
 | 1   | 10.0.0.1 | 10.0.0.2 | true |
 
 The drop view pyr_pyfw_drops will map these IP addresses to node IDs (hid's) and contain the row:
 
-** pyr_pyfw_drops **  
+**pyr_pyfw_drops**
+
 | src | dst |
 |-----|-----|
 | 1   | 2   |
@@ -63,14 +65,16 @@ match(srcip="10.0.0.1") >> rewrite(srcip="10.0.0.11")
 
 This will translate to a row in the policy table `pyr_nat_policy` with the values:
 
-** pyr_nat_policy **  
+**pyr_nat_policy**
+
 | id  | srcip    | rewrite_srcip | rewrite |
 |-----|----------|---------------|---------|
 | 1   | 10.0.0.1 | 10.0.0.11     |  true   |
 
 The srcip-specific rewrite view will contain the row:
 
-** pyr_nat_srcip_rewrites **
+**pyr_nat_srcip_rewrites**
+
 | srcip    | rewrite_srcips |
 |----------|----------------|
 | 10.0.0.1 | 10.0.0.11      |
