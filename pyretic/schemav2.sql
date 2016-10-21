@@ -87,11 +87,11 @@ CREATE OR REPLACE RULE nat_repair AS
 CREATE OR REPLACE RULE nat_op1_rewrite_repair AS
     ON DELETE TO nat_op1_rewrite_violation
     DO INSTEAD (
-        UPDATE rm SET src = (SELECT hid FROM hosts WHERE ip = '10.0.0.11');
+        UPDATE rm SET src = (SELECT hid FROM hosts WHERE ip = '10.0.0.11') WHERE fid=OLD.fid;
     );
 
 CREATE OR REPLACE RULE nat_op2_rewrite_repair AS
     ON DELETE TO nat_op2_rewrite_violation
     DO INSTEAD (
-        UPDATE rm SET dst = (SELECT hid FROM hosts WHERE ip = '10.0.0.11');
+        UPDATE rm SET dst = (SELECT hid FROM hosts WHERE ip = '10.0.0.1') WHERE fid=OLD.fid;
     );
