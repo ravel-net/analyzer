@@ -1,0 +1,53 @@
+;;srcRewrite insertion and dstRewrite insertion & fw view
+;;yices result: sat
+;;fw blacklist (2,4)(10,11)
+;;srcRewrite (2,3)-->(1,3)
+;;dstRewrite (1,3)-->(1,4)
+;;insert into rm (2,3)
+;;excepted result: flow(2,3) finally arrives at dst 4 by srcRewrite and dstRewrite, bypassing fw blacklist
+;;yices execution result:
+;;sat
+;;(= X1 2)
+;;(= Y1 3)
+;;(= Xalias 1) 
+;;(= X2 1)
+;;(= Y2 3)
+;;(= Yalias 4) 
+;;(= S 2)
+;;(= T 4)
+
+;;srcRewrite policy:
+(define X1::int)
+(define Y1::int)
+(define Xalias::int)
+(assert (and (= X1 2) (= Y1 3) (= Xalias 1)))
+
+;;dstRewrite policy
+(define X2::int)
+(define Y2::int)
+(define Yalias::int)
+(assert (and (= X2 1) (= Y2 3) (= Yalias 4)))
+
+;;if a flow wants to bypass fw policy, it must have both src and dst rewrites. In this situation, srcRewrite insertion changes dstRewrite's view. It means after srcRewrite inserts (Xalias,Y1) into rm, (Xalias,Y1) is in the dstRewrite's view, namely (Xalias,Y1)=(X2,Y2). Then dstRewrite will also inserts (X2,Yalias) into rm.
+;;We can compose these two insertions into one insertion. (Xalias,Yalias) will be inserted into rm if and only if (Xalias,Y1)=(X2,Y2)
+(assert (and (= Xalias X2) (= Y1 Y2)))
+
+;;FW view constraints
+(define S::int)
+(define T::int)
+(assert (or (and (= S 2)(= T 4))(and (= S 10)(= T 11))))
+
+;;original insertion (X1,Y1) doesn't violate fw policy
+(assert (not(and (= X1 S) (= Y1 T))))
+
+;;srcRewrite insertion (Xalias,Y1) doesn't violate fw policy
+(assert (not(and (= Xalias S) (= Y1 T))))
+
+;;dstRewrite insertion (X2,Yalias) doesn't violate fw policy
+(assert (not(and (= X2 S) (= Yalias T))))
+
+;;but in fact the flow now is from X1 to Yalias, which violates fw policy.
+(assert (and (= X1 S) (= Yalias T)))
+
+(check)
+(show-model)

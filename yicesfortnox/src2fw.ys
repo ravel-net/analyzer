@@ -1,0 +1,15 @@
+;;srcRewrite insertion & fw view
+;;yices result: unsat
+;;srcRewrite insertion 
+(define Xalias::int)
+(define Y::int)
+(assert (and (= Xalias 1) (= Y 3)))
+
+;;fw view constraints
+(define S::int)
+(define T::int)
+(assert (or (and (= S 2)(= T 4))(and (= S 10)(= T 11))))
+
+(assert (and (= Xalias S) (= Y T)))
+(check)
+(show-model)

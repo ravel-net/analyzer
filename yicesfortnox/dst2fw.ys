@@ -1,0 +1,14 @@
+;;dstRewrite insertion & fw view
+;;yices result: unsat
+;;dstRewrite insertion 
+(define X::int)
+(define Yalias::int)
+(assert (and (= X 1) (= Yalias 4)))
+
+;;fw view constraints
+(define S::int)
+(define T::int)
+(assert (or (and (= S 2)(= T 4))(and (= S 10)(= T 11))))
+(assert (and (= X S) (= Yalias T)))
+(check)
+(show-model)

@@ -1,4 +1,4 @@
-﻿FW deletion vs NAT public dst address monitoring view
+FW deletion vs NAT public dst address monitoring view
 Fd:the condition of FW delete operation
 F:the NAT view's selection condition
 The FW deletion is irrelevant to the NAT view if and only if (Fd and F) is unsatisfiable. 
