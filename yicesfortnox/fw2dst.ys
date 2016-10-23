@@ -1,0 +1,22 @@
+;;fw drop & dstRewrite view
+;;yices result: unsat
+
+;;fw drop condition
+(define X::int)
+(define Y::int)
+(assert (or (and (= X 2)(= Y 4))(and (= X 10)(= Y 11))))
+
+;;dstRewrite view constraints
+(define S::int)
+(define T::int)
+(define Talias::int)
+(assert (or (and (= S 1)(= T 3)(= Talias 4)) (and (= S 1)(= T 5)(= Talias 11))))
+
+;;Assuming that the Rewrite application will never rewrite heads of a packet that will be blocked
+(assert (not(and (= X S) (= Y Talias))))
+
+;;irrelevant deletion theorem
+(assert (and (= X S) (= Y T)))
+
+(check)
+(show-model)
