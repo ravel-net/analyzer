@@ -11,6 +11,18 @@ SELECT rm.fid,
     ON src.hid = rm.src
 );
 
+CREATE OR REPLACE RULE rm_match_src_update AS
+  ON UPDATE TO rm_match
+  DO INSTEAD (
+      UPDATE rm SET src = (SELECT hid FROM hosts WHERE ip=OLD.srcip);
+  );
+
+CREATE OR REPLACE RULE rm_match_dst_update AS
+  ON UPDATE TO rm_match
+  DO INSTEAD (
+      UPDATE rm SET dst = (SELECT hid FROM hosts WHERE ip=OLD.dstip);
+  );
+
 
 /*
 FW policy:
@@ -87,11 +99,11 @@ CREATE OR REPLACE RULE nat_repair AS
 CREATE OR REPLACE RULE nat_op1_rewrite_repair AS
     ON DELETE TO nat_op1_rewrite_violation
     DO INSTEAD (
-        UPDATE rm SET src = (SELECT hid FROM hosts WHERE ip = '10.0.0.11') WHERE fid=OLD.fid;
+        UPDATE rm_match SET srcip = '10.0.0.11';
     );
 
 CREATE OR REPLACE RULE nat_op2_rewrite_repair AS
     ON DELETE TO nat_op2_rewrite_violation
     DO INSTEAD (
-        UPDATE rm SET dst = (SELECT hid FROM hosts WHERE ip = '10.0.0.1') WHERE fid=OLD.fid;
+        UPDATE rm_match SET dstip = '10.0.0.1';
     );
