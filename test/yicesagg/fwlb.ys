@@ -1,0 +1,12 @@
+(define X::int)
+(define Y::int)
+(define L::int)
+(define load::(-> int int))
+;;FW DELETE
+(assert (or (and (= X 32) (= Y 24)) (and (= X 35) (= Y 34)) (and (= X 35) (= Y 25)) (and (= X 21) (= Y 35)) (and (= X 34) (= Y 20))))
+;;LOAD VIEW 
+(assert (or (= Y 42)(= Y 23)(= Y 39)))
+(assert (>= (- L 1) 5))
+(assert (< L 5))
+(assert (= L (load Y)))
+(check)
